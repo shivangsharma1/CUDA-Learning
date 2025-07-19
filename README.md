@@ -1,5 +1,5 @@
 # CUDA-Learning
-This repository contains my CUDA learning kernels. Below is my Learning Path I am following, currently learning from (Oak Ridge National laboratory)[https://www.olcf.ornl.gov/cuda-training-series/].
+This repository contains my CUDA learning kernels. Below is my Learning Path I am following, currently learning from [Oak Ridge National laboratory](https://www.olcf.ornl.gov/cuda-training-series/).
 
 ## Learning Path
 1. Community help: [Reddit Thread 1](https://old.reddit.com/r/GraphicsProgramming/comments/1fpi2cv/learning_cuda_for_graphics/loz9sm3/) , [Reddit Thread 2](https://old.reddit.com/r/CUDA/comments/1chklwq/best_practices_for_designing_complex_gpu/)
