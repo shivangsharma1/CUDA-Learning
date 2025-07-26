@@ -70,6 +70,42 @@ __global__ void reduce_a(float* gdata, float* out){
     if (tid == 0) atomicAdd(out, sdata[0]);
 }
 
+
+__global__ void reduce_ws(float* gdata, float* out){
+    __shared__ float sdata[32];
+    int tid = threadIdx.x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    unsigned mask = 0xFFFFFFFFU;
+    int lane = tid % warpSize;
+    int warpid = tid / warpSize;
+    float val = 0.0f;
+
+    while (idx < N){
+        val += gdata[idx];
+        idx += gridDim.x * blockDim.x;
+    }
+
+    for (int offset = warpSize/2; offset >0 ;offset >>= 1) {
+        val += __shfl_down_sync(mask, val, offset);
+    }
+
+    if (lane == 0) sdata[warpid] = val;
+    __syncthreads();
+
+    // summing the 32 blocks into 1st warp
+    if (warpid == 0){
+        val = (tid < blockDim.x / warpSize)?sdata[lane]:0;
+    }
+
+    for (int offset = warpSize/2; offset >0 ;offset >>= 1) {
+        val += __shfl_down_sync(mask, val, offset);
+    }
+
+    if (tid == 0) atomicAdd(out, val);
+
+}   
+
+
 int main(){
     float *A, *sum, *d_A, *d_sum;
     A = new float[N];
@@ -114,7 +150,17 @@ int main(){
     }
     printf("reduce sum reduction correct");
 
-
-
+    // reduce_ws
+    cudaMemset(d_sum, 0, sizeof(float));
+    cudaCheckErrors("cuda memeset fails");
+    reduce_a<<<blocks, threads>>>(d_A, d_sum);
+    cudaCheckErrors("atomic red kernel error");
+    cudaMemcpy(sum, d_sum, sizeof(float), cudaMemcpyDeviceToHost);
+    // check results:
+    if (*sum != float(N)){
+        printf("reduce reduction sum incorrect sum = %f and N = %lu", *sum, N);
+        return -1;
+    }
+    printf("reduce ws sum reduction correct");
     return 0;
 }
